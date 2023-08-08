@@ -38,7 +38,7 @@ func run(r io.Reader) error {
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"API Version", "Kind", "Name"})
+	table.SetHeader([]string{"API Version", "Kind", "Namespace", "Name"})
 
 	for _, object := range objects {
 		ss, err := summarize(object)
@@ -80,11 +80,12 @@ func decode(r io.Reader) ([]map[string]interface{}, error) {
 type summary struct {
 	APIVersion string
 	Kind       string
+	Namespace  string
 	Name       string
 }
 
 func (s *summary) row() []string {
-	return []string{s.APIVersion, s.Kind, s.Name}
+	return []string{s.APIVersion, s.Kind, s.Namespace, s.Name}
 }
 
 func summarizeItem(m map[interface{}]interface{}) (*summary, error) {
@@ -109,13 +110,20 @@ func summarizeItem(m map[interface{}]interface{}) (*summary, error) {
 		Kind:       kind,
 	}
 
+	namespaceRaw := metadata["namespace"]
+	if namespaceRaw != nil {
+		s.Namespace, ok = namespaceRaw.(string)
+		if !ok {
+			return nil, errors.New("finding namespace")
+		}
+	}
+
 	nameRaw := metadata["name"]
 	if nameRaw != nil {
 		s.Name, ok = nameRaw.(string)
 		if !ok {
 			return nil, errors.New("finding name")
 		}
-
 		return s, nil
 	}
 
@@ -128,7 +136,6 @@ func summarizeItem(m map[interface{}]interface{}) (*summary, error) {
 
 		return s, nil
 	}
-
 	return nil, errors.New("unable to find object name")
 }
 
@@ -171,6 +178,14 @@ func summarize(m map[string]interface{}) (summaries []*summary, err error) {
 		s := &summary{
 			APIVersion: apiVersion,
 			Kind:       kind,
+		}
+
+		namespaceRaw := metadata["namespace"]
+		if namespaceRaw != nil {
+			s.Namespace, ok = namespaceRaw.(string)
+			if !ok {
+				return nil, errors.New("finding namespace")
+			}
 		}
 
 		nameRaw := metadata["name"]
