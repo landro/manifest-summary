@@ -5,7 +5,7 @@ Read a Kubernetes manifest and print a table of its contents.
 ## Installation
 
 ```
-$ go install github.com/landro/manifest-summary
+$ go install github.com/landro/manifest-summary@latest
 ```
 
 Requires Go to install.
